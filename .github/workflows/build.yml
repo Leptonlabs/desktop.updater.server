@@ -1,14 +1,17 @@
 name: Publish Release
 on:
   push:
-    tags:
-      - "v*"
   workflow_dispatch:
 
 env:
   APP_NAME: "Sample Desktop App"
 
 jobs:
+  test-job:
+    runs-on: windows-latest
+    steps:
+      - run: node --version
+      - run: npm --version
   changelog:
     runs-on: ubuntu-latest
     steps:
@@ -72,7 +75,7 @@ jobs:
         with:
           # tauri-action replaces \_\_VERSION\_\_ with the app version
           tagName: ${{ github.ref_name }}
-          releaseName: "${{ env.APP_NAME }} v__VERSION__"
+          releaseName: "${{ env.APP_NAME }} v0.1.6"
           releaseBody: |
             ${{needs.changelog.outputs.changelog}}
             See the assets to download this version and install.
