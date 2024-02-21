@@ -8,8 +8,7 @@ import requests
 
 tauri_releases_bp = Blueprint('tauri_releases', __name__, url_prefix='/tauri-releases', template_folder='blueprints/tauri_releases/templates')
 
-GOOGLE_KEEP_DESKTOP_REPO = 'Leptonlabs/desktop.updater.server'
-
+DESKTOP_REPO = 'Leptonlabs/desktop.updater.server'
 PLATFORMS = [ # platform, extension
     (('linux-x86_64',), 'amd64.AppImage.tar.gz'),
     (('darwin-x86_64', 'darwin-aarch64'), 'app.tar.gz'),
@@ -47,6 +46,9 @@ def get_latest_gh_release(repo) -> dict:
         }
     """
     github_latest_release_url = f'https://api.github.com/repos/{repo}/releases/latest'
+    # github_latest_release_url = f"https://github.com/{repo}/releases/latest"
+    # f'https://api.github.com/repos/{repo}/releases/latest'
+    
     try:
         release = requests.get(github_latest_release_url).json()
     except requests.RequestException:
@@ -73,15 +75,16 @@ def get_latest_gh_release(repo) -> dict:
 @tauri_releases_bp.route('/')
 
 def hello():
-    return 'Hello',204
+    return 'Hello',200
 
 @tauri_releases_bp.route('/desktop.updater.server/<platform>/<current_version>')
 def google_keep_desktop_api(platform, current_version):
-    latest_release = get_latest_gh_release(GOOGLE_KEEP_DESKTOP_REPO)
+    latest_release = get_latest_gh_release(DESKTOP_REPO)
+    
     if not latest_release:
         # GH API request failed in get_latest_release for GKD
         # TODO: Push Discord or Element notification (max once) if request failed
-        return '', 204
+        return 'no release found', 404
     try:
         # version checks
         latest_version = latest_release['version']
@@ -90,8 +93,8 @@ def google_keep_desktop_api(platform, current_version):
         if cur_maj == latest_maj and cur_min == latest_min and cur_patch == latest_patch:
             raise ValueError
         # NOTE: here you may want to check the current_version or platform (see README.md)
-    except ValueError:
-        return '', 204
+    except ValueError as error:
+        return error, 500
     return latest_release
 
 

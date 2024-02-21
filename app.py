@@ -5,6 +5,7 @@ from blueprints.tauri_releases import tauri_releases_bp
 
 app = Flask(__name__)
 CORS(app)
+
 try:
     app.register_blueprint(tauri_releases_bp)
 except Exception as e:
