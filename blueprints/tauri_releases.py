@@ -16,7 +16,7 @@ PLATFORMS = [ # platform, extension
 ]
 
 # @time_cache(60 * 5)  # every 5 minutes
-def get_latest_gh_release(repo) -> dict:
+def get_latest_release(repo) -> dict:
     """
         repo: username/project-name
         Return format:
@@ -75,12 +75,12 @@ def get_latest_gh_release(repo) -> dict:
 
 @tauri_releases_bp.route('/')
 
-def hello():
-    return 'Hello',200
+def ok():
+    return 'ok',200
 
-@tauri_releases_bp.route('/desktop.updater.server/<platform>/<current_version>')
-def google_keep_desktop_api(platform, current_version):
-    latest_release = get_latest_gh_release(DESKTOP_REPO)
+@tauri_releases_bp.route('/playtime.game/<platform>/<current_version>')
+def should_we_update(platform, current_version):
+    latest_release = get_latest_release(DESKTOP_REPO)
     
     if not latest_release:
         # GH API request failed in get_latest_release for GKD
@@ -95,11 +95,11 @@ def google_keep_desktop_api(platform, current_version):
             raise ValueError
         # NOTE: here you may want to check the current_version or platform (see README.md)
     except ValueError as error:
-        return error, 500
+        return error, 400
     return latest_release
 
 
-@tauri_releases_bp.route('/desktop.updater.server/')
+@tauri_releases_bp.route('/playtime.game/')
 def google_keep_desktop_page():
     # TODO: Download Links Page
     return '', 404
