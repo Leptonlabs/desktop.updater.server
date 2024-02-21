@@ -51,26 +51,27 @@ def get_latest_gh_release(repo) -> dict:
     
     try:
         release = requests.get(github_latest_release_url).json()
-    except requests.RequestException:
+    
+        release_response = {
+            'version': release['tag_name'],
+            'notes': release['body'].removesuffix('See the assets to download this version and install.').rstrip('\r\n '),
+            'pub_date': release['published_at'],
+            'platforms': {}}
+        for asset in release.get('assets', []):
+            for for_platforms, extension in PLATFORMS:
+                if asset['name'].endswith(extension):
+                    for platform in for_platforms:
+                        release_response['platforms'][platform] = {**release_response['platforms'].get(platform, {}), 'url': asset['browser_download_url']}
+                elif asset['name'].endswith(f'{extension}.sig'):
+                    try:
+                        sig = requests.get(asset['browser_download_url']).text
+                    except requests.RequestException:
+                        sig = ''
+                    for platform in for_platforms:
+                        release_response['platforms'][platform] = {**release_response['platforms'].get(platform, {}), 'signature': sig}
+        return release_response
+    except requests.RequestException :
         return {}
-    release_response = {
-        'version': release['tag_name'],
-        'notes': release['body'].removesuffix('See the assets to download this version and install.').rstrip('\r\n '),
-        'pub_date': release['published_at'],
-        'platforms': {}}
-    for asset in release.get('assets', []):
-        for for_platforms, extension in PLATFORMS:
-            if asset['name'].endswith(extension):
-                for platform in for_platforms:
-                    release_response['platforms'][platform] = {**release_response['platforms'].get(platform, {}), 'url': asset['browser_download_url']}
-            elif asset['name'].endswith(f'{extension}.sig'):
-                try:
-                    sig = requests.get(asset['browser_download_url']).text
-                except requests.RequestException:
-                    sig = ''
-                for platform in for_platforms:
-                    release_response['platforms'][platform] = {**release_response['platforms'].get(platform, {}), 'signature': sig}
-    return release_response
 
 @tauri_releases_bp.route('/')
 
